@@ -6,11 +6,17 @@
 
 package com.challengercity.launcher;
 
+import java.awt.Desktop;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import javax.swing.DefaultListModel;
 import javax.swing.JPanel;
 
 /**
@@ -28,6 +34,13 @@ public class STLauncher extends javax.swing.JFrame {
         prefs = java.util.prefs.Preferences.userRoot();
         prefs = prefs.node("com.challengercity.launcher.prefs");
         usernameField.setText(prefs.get("username",""));
+        if (!"".equals(prefs.get("username",""))) {
+            rememLoginCheck.setSelected(true);
+            passwordField.requestFocus(); // This doesn't really work
+        }
+        
+        desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+        canOpenWebpages = desktop != null && desktop.isSupported(Desktop.Action.BROWSE);
         
         switchVisiblePanel(loginPanel);
     }
@@ -51,6 +64,7 @@ public class STLauncher extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         rememLoginCheck = new javax.swing.JCheckBox();
         offlineButton = new javax.swing.JButton();
+        loginFeedbackLabel = new javax.swing.JLabel();
         mainPanel = new javax.swing.JPanel();
         updateButton = new javax.swing.JButton();
         playButton = new javax.swing.JButton();
@@ -66,10 +80,10 @@ public class STLauncher extends javax.swing.JFrame {
         descriptionPane = new javax.swing.JTextPane();
         jScrollPane5 = new javax.swing.JScrollPane();
         newsEditorPane = new javax.swing.JEditorPane();
+        websiteButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Sergent-Tech Launcher");
-        setPreferredSize(new java.awt.Dimension(600, 350));
         getContentPane().setLayout(new java.awt.CardLayout());
 
         loginPanel.setPreferredSize(new java.awt.Dimension(600, 350));
@@ -95,6 +109,11 @@ public class STLauncher extends javax.swing.JFrame {
         });
 
         createAcctButton.setText("Create Account");
+        createAcctButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                createAcctButtonActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Lucida Sans Typewriter", 0, 24)); // NOI18N
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -115,6 +134,9 @@ public class STLauncher extends javax.swing.JFrame {
             }
         });
 
+        loginFeedbackLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        loginFeedbackLabel.setText("jLabel4");
+
         javax.swing.GroupLayout loginPanelLayout = new javax.swing.GroupLayout(loginPanel);
         loginPanel.setLayout(loginPanelLayout);
         loginPanelLayout.setHorizontalGroup(
@@ -123,7 +145,7 @@ public class STLauncher extends javax.swing.JFrame {
                 .addGroup(loginPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(loginPanelLayout.createSequentialGroup()
-                        .addGap(137, 137, 137)
+                        .addContainerGap(137, Short.MAX_VALUE)
                         .addGroup(loginPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel2)
                             .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -138,16 +160,17 @@ public class STLauncher extends javax.swing.JFrame {
                                             .addComponent(offlineButton)))
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                     .addComponent(loginButton))
-                                .addComponent(passwordField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(passwordField, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 320, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(loginFeedbackLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 314, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 137, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         loginPanelLayout.setVerticalGroup(
             loginPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(loginPanelLayout.createSequentialGroup()
-                .addContainerGap(80, Short.MAX_VALUE)
+                .addGap(47, 47, 47)
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGap(45, 45, 45)
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(usernameField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -162,7 +185,9 @@ public class STLauncher extends javax.swing.JFrame {
                     .addComponent(createAcctButton)
                     .addComponent(loginButton)
                     .addComponent(offlineButton))
-                .addGap(59, 59, 59))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(loginFeedbackLabel)
+                .addGap(37, 37, 37))
         );
 
         getContentPane().add(loginPanel, "card2");
@@ -179,6 +204,8 @@ public class STLauncher extends javax.swing.JFrame {
             }
         });
 
+        mainProgress.setEnabled(false);
+
         loginLogoutButton.setText("Logout");
         loginLogoutButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -190,6 +217,11 @@ public class STLauncher extends javax.swing.JFrame {
             String[] strings = { "Datura", "Tanks", "Hedgehog", "ClickSpeed" };
             public int getSize() { return strings.length; }
             public Object getElementAt(int i) { return strings[i]; }
+        });
+        productList.addListSelectionListener(new javax.swing.event.ListSelectionListener() {
+            public void valueChanged(javax.swing.event.ListSelectionEvent evt) {
+                productListValueChanged(evt);
+            }
         });
         jScrollPane1.setViewportView(productList);
 
@@ -208,6 +240,13 @@ public class STLauncher extends javax.swing.JFrame {
         newsEditorPane.setEditable(false);
         jScrollPane5.setViewportView(newsEditorPane);
 
+        websiteButton.setText("Website");
+        websiteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                websiteButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout productPanelLayout = new javax.swing.GroupLayout(productPanel);
         productPanel.setLayout(productPanelLayout);
         productPanelLayout.setHorizontalGroup(
@@ -215,22 +254,29 @@ public class STLauncher extends javax.swing.JFrame {
             .addGroup(productPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(productTitle)
-                    .addComponent(jLabel5)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(productPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel6)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 241, Short.MAX_VALUE))
-                .addContainerGap())
+                        .addComponent(productTitle, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(websiteButton)
+                        .addContainerGap())
+                    .addGroup(productPanelLayout.createSequentialGroup()
+                        .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 157, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(productPanelLayout.createSequentialGroup()
+                                .addComponent(jLabel6)
+                                .addContainerGap(213, Short.MAX_VALUE))
+                            .addComponent(jScrollPane5)))))
         );
         productPanelLayout.setVerticalGroup(
             productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(productPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(productTitle)
+                .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(productTitle)
+                    .addComponent(websiteButton))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
@@ -273,10 +319,10 @@ public class STLauncher extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(loginLogoutButton)
+                    .addComponent(mainProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(playButton)
-                        .addComponent(updateButton)
-                        .addComponent(mainProgress, javax.swing.GroupLayout.PREFERRED_SIZE, 29, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(updateButton)))
                 .addContainerGap())
         );
 
@@ -295,6 +341,8 @@ public class STLauncher extends javax.swing.JFrame {
 
     private void loginLogoutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginLogoutButtonActionPerformed
         switchVisiblePanel(loginPanel);
+        sessionID = "";
+        username = "";
     }//GEN-LAST:event_loginLogoutButtonActionPerformed
 
     private void usernameFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_usernameFieldKeyPressed
@@ -314,6 +362,36 @@ public class STLauncher extends javax.swing.JFrame {
         
         switchVisiblePanel(mainPanel);
     }//GEN-LAST:event_offlineButtonActionPerformed
+
+    private void productListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_productListValueChanged
+        showProduct((Product) productList.getSelectedValue());
+    }//GEN-LAST:event_productListValueChanged
+
+    private void createAcctButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createAcctButtonActionPerformed
+        if (canOpenWebpages) {
+            try {
+                desktop.browse(new URI("http://challengercity.com/v4/account/frontend/createAccount.php"));
+                loginFeedbackLabel.setText("Login here after creating an account");
+            } catch (URISyntaxException | IOException e) {
+                loginFeedbackLabel.setText("Please visit http://challengercity.com/");
+            }
+        } else {
+            loginFeedbackLabel.setText("Please visit http://challengercity.com/");
+        }
+    }//GEN-LAST:event_createAcctButtonActionPerformed
+
+    private void websiteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_websiteButtonActionPerformed
+        if (canOpenWebpages) {
+            try {
+                Product selProd = (Product) productList.getSelectedValue();
+                desktop.browse(new URI(selProd.website));
+            } catch (URISyntaxException | IOException e) {
+                // Do nothing
+            }
+        } else {
+            websiteButton.setEnabled(false);
+        }
+    }//GEN-LAST:event_websiteButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -350,6 +428,13 @@ public class STLauncher extends javax.swing.JFrame {
         });
     }
     
+    
+    public void debugMessage(String msg) {
+        if (DEBUG) {
+            System.out.println("[DEBUG] "+msg);
+        }
+    }
+    
     public void switchVisiblePanel(JPanel panel) {
         loginPanel.setVisible(false);
         mainPanel.setVisible(false);
@@ -367,7 +452,7 @@ public class STLauncher extends javax.swing.JFrame {
             // Attempt Login
             String urlAddress = "http://challengercity.com/v4/account/login.php";
             String query = "usernameOrEmail="+usernameField.getText()+"&password="+passwordField.getText()+"&product=stLauncher&expiration=1day";
-            System.out.println("URL: "+urlAddress);
+            debugMessage("URL: "+urlAddress);
             URLConnection connection = new URL(urlAddress).openConnection();
             connection.setDoOutput(true); // Triggers POST.
             //connection.setRequestProperty("Accept-Charset", charset);
@@ -383,7 +468,7 @@ public class STLauncher extends javax.swing.JFrame {
                 postResult = postResult + postInputLine;
             postIn.close();
             
-            System.out.println("Post Result: "+postResult);
+            debugMessage("Post Result: "+postResult);
             
             String[] splitPostResult = postResult.split(Character.toString((char) 31));
             
@@ -391,6 +476,8 @@ public class STLauncher extends javax.swing.JFrame {
                 sessionID = splitPostResult[1];
                 username = splitPostResult[3];
                 loginLogoutButton.setText("Logout");
+                
+                updateProducts();
                 
                 switchVisiblePanel(mainPanel);
             }
@@ -401,9 +488,86 @@ public class STLauncher extends javax.swing.JFrame {
         passwordField.setText("");
     }
     
+    public void updateProducts() {
+        try {
+            URLConnection productsConnection = new URL("http://challengercity.com/v4/getProducts.php").openConnection();
+            BufferedReader productsIn = new BufferedReader(new InputStreamReader(productsConnection.getInputStream()));
+            String productsInputLine;
+            String productsResult = "";
+            while ((productsInputLine = productsIn.readLine()) != null)
+                productsResult = productsResult+productsInputLine;
+            productsIn.close();
+            
+            rawProductList.clear();
+            String[] sa = productsResult.split(Character.toString((char) 29));
+            if ("1".equals(sa[0])) {
+                for (int i = 1; i < sa.length; i++) {
+                    String[] saa = sa[i].split(Character.toString((char) 31));
+                    Product prod = new Product(
+                            Integer.parseInt(saa[0]),
+                            saa[1],
+                            saa[2],
+                            saa[3], 
+                            "1".equals(saa[4]),
+                            "1".equals(saa[5]),
+                            Float.parseFloat(saa[6]),
+                            saa.length>7?saa[7]:null,
+                            saa.length>8?saa[8]:null,
+                            saa.length>9?saa[9]:null);
+                    rawProductList.add(prod);
+                    debugMessage(prod.toString());
+                }
+            } else {
+                System.out.println("Failed to fetch product list from server");
+            }
+        } catch (IOException | NumberFormatException ex) {
+            System.out.println("Failed to fetch product list from server");
+        }
+        
+        Product prodToSel = null;
+        
+        DefaultListModel productModel = new DefaultListModel();
+        for (Product rProd : rawProductList) {
+            if (rProd.showInLauncher) {
+                productModel.addElement(rProd);
+                prodToSel = rProd;
+            }
+        }
+        
+        productList.setModel(productModel);
+        
+        if (prodToSel != null) {
+            productList.setSelectedValue(prodToSel, true);
+        }
+    }
+    
+    public void showProduct(Product newProd) {
+        productTitle.setText(newProd.toString() + " v" + newProd.version);
+        descriptionPane.setText(newProd.desc);
+        websiteButton.setEnabled(!"".equals(newProd.website));
+        
+    }
+    
+    public static String getWorkingDirectory() {
+        String workingDirectory;
+        String OS = (System.getProperty("os.name")).toUpperCase();
+        if (OS.contains("WIN")) {
+            workingDirectory = System.getenv("AppData");
+        } else { // Linux or Mac
+            workingDirectory = System.getProperty("user.home");
+            workingDirectory += "/Library/Application Support";
+        }
+        return workingDirectory;
+    }
+    
     private static java.util.prefs.Preferences prefs;
+    private static final boolean DEBUG = true;
+    private static final String VERSION = "0.0.2A";
+    private static boolean canOpenWebpages = true;
+    private static Desktop desktop;
     private String sessionID = "";
     private String username = "";
+    private ArrayList<Product> rawProductList = new ArrayList<>();
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createAcctButton;
@@ -417,6 +581,7 @@ public class STLauncher extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JButton loginButton;
+    private javax.swing.JLabel loginFeedbackLabel;
     private javax.swing.JButton loginLogoutButton;
     private javax.swing.JPanel loginPanel;
     private javax.swing.JPanel mainPanel;
@@ -431,5 +596,6 @@ public class STLauncher extends javax.swing.JFrame {
     private javax.swing.JCheckBox rememLoginCheck;
     private javax.swing.JButton updateButton;
     private javax.swing.JTextField usernameField;
+    private javax.swing.JButton websiteButton;
     // End of variables declaration//GEN-END:variables
 }
