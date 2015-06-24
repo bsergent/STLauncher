@@ -3,7 +3,6 @@ package com.challengercity.launcher;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
@@ -73,11 +72,44 @@ public class Product {
         return true;
     }
     
-    public static boolean isOutdated(String current, String database) {
-        if (!"".equals(database) && "".equals(current)) {
+    public boolean isOutdated() {
+        if (!"".equals(version) && "".equals(downloadedVersion)) {
+            STLauncher.debugMessage("Outdated by no download");
             return true;
         }
-        String versionTypes = "ABR";
+        
+        char cT = downloadedVersion.charAt(downloadedVersion.length()-1);
+        char dT = version.charAt(version.length()-1);
+        String cN = downloadedVersion.substring(0,downloadedVersion.length()-1);
+        String dN = version.substring(0,version.length()-1);
+        String[] cNA = downloadedVersion.split(".");
+        String[] dNA = version.split(".");
+        
+        if (dT == 'R' && (cT == 'B' || cT == 'A') || // Database is release, current is beta or alpha
+                dT == 'B' && cT == 'A') { // Database is beta, current is alpha
+            STLauncher.debugMessage("Outdated by version type");
+            return true;
+        }
+        
+        int shorterLength = cNA.length>dNA.length?dNA.length:cNA.length;
+        
+        for (int i = 0; i < shorterLength; i++) {
+            if (Integer.parseInt(cNA[i]) < Integer.parseInt(dNA[i])) {
+                STLauncher.debugMessage("Outdated by "+i+"number");
+                return true;
+            }
+        }
+        
+        if (cNA.length < dNA.length) {
+            STLauncher.debugMessage("Outdated by shorter length");
+            return true;
+        }
+        
+        // Compare versions
+        // Check ABR first _/
+        // Take off ABR and split by . delimiter _/
+        // Compare integers starting from the left and moving to the right
+        
         return false;
     }
 

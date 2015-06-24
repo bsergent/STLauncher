@@ -42,6 +42,8 @@ public class STLauncher extends javax.swing.JFrame {
         desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
         canOpenWebpages = desktop != null && desktop.isSupported(Desktop.Action.BROWSE);
         
+        this.setTitle("Sergent-Tech Launcher - v"+VERSION);
+        
         switchVisiblePanel(loginPanel);
     }
 
@@ -195,6 +197,11 @@ public class STLauncher extends javax.swing.JFrame {
         mainPanel.setSize(new java.awt.Dimension(600, 350));
 
         updateButton.setText("Update");
+        updateButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateButtonActionPerformed(evt);
+            }
+        });
 
         playButton.setText("Play");
         playButton.setToolTipText("");
@@ -332,7 +339,7 @@ public class STLauncher extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
-        // TODO add your handling code here:
+        // TODO Start product
     }//GEN-LAST:event_playButtonActionPerformed
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
@@ -393,6 +400,10 @@ public class STLauncher extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_websiteButtonActionPerformed
 
+    private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateButtonActionPerformed
+        // TODO Update/download product
+    }//GEN-LAST:event_updateButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -429,7 +440,7 @@ public class STLauncher extends javax.swing.JFrame {
     }
     
     
-    public void debugMessage(String msg) {
+    public static void debugMessage(String msg) {
         if (DEBUG) {
             System.out.println("[DEBUG] "+msg);
         }
@@ -545,7 +556,8 @@ public class STLauncher extends javax.swing.JFrame {
         productTitle.setText(newProd.toString() + " v" + newProd.version);
         descriptionPane.setText(newProd.desc);
         websiteButton.setEnabled(!"".equals(newProd.website));
-        
+        updateButton.setEnabled(newProd.isOutdated());
+        playButton.setEnabled(!newProd.isOutdated());
     }
     
     public static String getWorkingDirectory() {
@@ -562,7 +574,7 @@ public class STLauncher extends javax.swing.JFrame {
     
     private static java.util.prefs.Preferences prefs;
     private static final boolean DEBUG = true;
-    private static final String VERSION = "0.0.2A";
+    private static final String VERSION = "0.0.3A";
     private static boolean canOpenWebpages = true;
     private static Desktop desktop;
     private String sessionID = "";
