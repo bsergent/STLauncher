@@ -22,10 +22,12 @@ public class Product {
     public String file;
     public String news;
     public String website;
+    public String libChangeVersion;
+    public String libFile;
     
     public String downloadedVersion;
 
-    public Product(int id, String name, String version, String desc, boolean forceLatest, boolean showInLauncher, float price, String file, String news, String website) {
+    public Product(int id, String name, String version, String desc, boolean forceLatest, boolean showInLauncher, float price, String file, String news, String website, String libChangeVersion, String libFile) {
         this.id = id;
         this.name = name;
         this.version = version;
@@ -36,6 +38,8 @@ public class Product {
         this.file = file;
         this.news = news;
         this.website = website;
+        this.libChangeVersion = libChangeVersion;
+        this.libFile = libFile;
         
         if (showInLauncher) {
             downloadedVersion = "";
@@ -65,11 +69,18 @@ public class Product {
     }
     
     public boolean createDirectory() {
-        return true;
-    }
-    
-    public boolean update() {
-        return true;
+        try {
+            File baseFile = new File(STLauncher.getWorkingDirectory()+"/"+name);
+            baseFile.mkdir();
+            new File(baseFile+"/bin").mkdir();
+            new File(baseFile+"/bin/natives").mkdir();
+            new File(baseFile+"/bin/lib").mkdir();
+            new File(baseFile+"/resources").mkdir();
+            
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
     
     public boolean isOutdated() {
@@ -77,13 +88,25 @@ public class Product {
             STLauncher.debugMessage("Outdated by no download");
             return true;
         }
+        return compareVersions(downloadedVersion, version);
+    }
+    
+    public boolean isLibOutdated() {
+        if (!"".equals(libChangeVersion) && "".equals(downloadedVersion)) {
+            STLauncher.debugMessage("Outdated by no download");
+            return true;
+        }
+        return compareVersions(downloadedVersion, libChangeVersion);
+    }
+    
+    private boolean compareVersions(String current, String published) { // Returns true if current is outdated
         
-        char cT = downloadedVersion.charAt(downloadedVersion.length()-1);
-        char dT = version.charAt(version.length()-1);
-        String cN = downloadedVersion.substring(0,downloadedVersion.length()-1);
-        String dN = version.substring(0,version.length()-1);
-        String[] cNA = downloadedVersion.split(".");
-        String[] dNA = version.split(".");
+        char cT = current.charAt(current.length()-1);
+        char dT = published.charAt(published.length()-1);
+        String cN = current.substring(0,current.length()-1);
+        String dN = published.substring(0,published.length()-1);
+        String[] cNA = cN.split("\\.");
+        String[] dNA = dN.split("\\.");
         
         if (dT == 'R' && (cT == 'B' || cT == 'A') || // Database is release, current is beta or alpha
                 dT == 'B' && cT == 'A') { // Database is beta, current is alpha
@@ -104,11 +127,6 @@ public class Product {
             STLauncher.debugMessage("Outdated by shorter length");
             return true;
         }
-        
-        // Compare versions
-        // Check ABR first _/
-        // Take off ABR and split by . delimiter _/
-        // Compare integers starting from the left and moving to the right
         
         return false;
     }

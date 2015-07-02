@@ -7,15 +7,23 @@
 package com.challengercity.launcher;
 
 import java.awt.Desktop;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JPanel;
 
@@ -86,6 +94,7 @@ public class STLauncher extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Sergent-Tech Launcher");
+        setLocationByPlatform(true);
         getContentPane().setLayout(new java.awt.CardLayout());
 
         loginPanel.setPreferredSize(new java.awt.Dimension(600, 350));
@@ -127,7 +136,7 @@ public class STLauncher extends javax.swing.JFrame {
         jLabel3.setLabelFor(passwordField);
         jLabel3.setText("Password:");
 
-        rememLoginCheck.setText("Keep me logged in");
+        rememLoginCheck.setText("Remember me");
 
         offlineButton.setText("Offline");
         offlineButton.addActionListener(new java.awt.event.ActionListener() {
@@ -137,7 +146,6 @@ public class STLauncher extends javax.swing.JFrame {
         });
 
         loginFeedbackLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        loginFeedbackLabel.setText("jLabel4");
 
         javax.swing.GroupLayout loginPanelLayout = new javax.swing.GroupLayout(loginPanel);
         loginPanel.setLayout(loginPanelLayout);
@@ -339,7 +347,28 @@ public class STLauncher extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
-        // TODO Start product
+        try {
+            Product prod = (Product) productList.getSelectedValue();
+            Process proc = Runtime.getRuntime().exec(new String[]{"java","-jar",STLauncher.getWorkingDirectory()+"/"+prod.name+"/bin/"+prod.name+".jar"});
+            System.exit(0);
+            
+//            proc.waitFor();
+//            
+//            InputStream in = proc.getInputStream();
+//            InputStream err = proc.getErrorStream();
+//
+//            byte b[]=new byte[in.available()];
+//            in.read(b,0,b.length);
+//            System.out.println(new String(b));
+//
+//            byte c[]=new byte[err.available()];
+//            err.read(c,0,c.length);
+//            System.out.println(new String(c));
+            
+        } catch (Exception ex) {
+            Logger.getLogger(STLauncher.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
     }//GEN-LAST:event_playButtonActionPerformed
 
     private void loginButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loginButtonActionPerformed
@@ -401,9 +430,38 @@ public class STLauncher extends javax.swing.JFrame {
     }//GEN-LAST:event_websiteButtonActionPerformed
 
     private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateButtonActionPerformed
-        // TODO Update/download product
+
+        updateButton.setEnabled(false);
+        
+        currentDownload = new DownloadWorker((Product) productList.getSelectedValue(), mainProgress);
+        currentDownload.addPropertyChangeListener(new DownloadProgressListener());
+        currentDownload.execute();
+        
     }//GEN-LAST:event_updateButtonActionPerformed
 
+    private class DownloadProgressListener implements PropertyChangeListener {
+        
+        private String taskName = "";
+        private int progress = 0;
+
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+            if ("progress".equals(evt.getPropertyName()) && evt.getNewValue() instanceof Integer) {
+                progress = (int) evt.getNewValue();
+            } else if ("task".equals(evt.getPropertyName())) {
+                taskName = (String) evt.getNewValue();
+            } else if ("state".equals(evt.getPropertyName()) && evt.getNewValue() == DownloadWorker.StateValue.DONE) {
+                currentDownload = null;
+                playButton.setEnabled(true);
+            }
+            debugMessage("Property "+evt.getPropertyName()+" changed to "+evt.getNewValue());
+            
+            mainProgress.setString(taskName+" - "+progress+"%");
+            mainProgress.setValue(progress);
+        }
+        
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -453,6 +511,8 @@ public class STLauncher extends javax.swing.JFrame {
     }
     
     public void attemptLogin() {
+        loginFeedbackLabel.setText("");
+        
         if (rememLoginCheck.isSelected()) {
             prefs.put("username", usernameField.getText());
         } else {
@@ -491,9 +551,11 @@ public class STLauncher extends javax.swing.JFrame {
                 updateProducts();
                 
                 switchVisiblePanel(mainPanel);
+            } else {
+                loginFeedbackLabel.setText("Incorrect username/password combination");
             }
         } catch (Exception ex) {
-
+            loginFeedbackLabel.setText("Could not connect to login servers");
         }
         
         passwordField.setText("");
@@ -524,9 +586,24 @@ public class STLauncher extends javax.swing.JFrame {
                             Float.parseFloat(saa[6]),
                             saa.length>7?saa[7]:null,
                             saa.length>8?saa[8]:null,
-                            saa.length>9?saa[9]:null);
+                            saa.length>9?saa[9]:null,
+                            saa.length>10?saa[10]:null,
+                            saa.length>11?saa[11]:null);
                     rawProductList.add(prod);
-                    debugMessage(prod.toString());
+                    debugMessage(prod.toString()+" v"+prod.version);
+                }
+                
+                for (Product prod : rawProductList) {
+                    if ("stLauncher".equals(prod.name)) {
+                        prod.downloadedVersion = VERSION;
+                        if (prod.isOutdated()) {
+                            this.setTitle("Sergent-Tech Launcher - v"+VERSION+" - Outdated");
+                            STLauncher.debugMessage("Update for launcher avaliable");
+                        } else {
+                            STLauncher.debugMessage("Launcher up to date");
+                        }
+                        break;
+                    }
                 }
             } else {
                 System.out.println("Failed to fetch product list from server");
@@ -558,6 +635,10 @@ public class STLauncher extends javax.swing.JFrame {
         websiteButton.setEnabled(!"".equals(newProd.website));
         updateButton.setEnabled(newProd.isOutdated());
         playButton.setEnabled(!newProd.isOutdated());
+        
+        if (currentDownload != null) {
+            updateButton.setEnabled(false);
+        }
     }
     
     public static String getWorkingDirectory() {
@@ -580,6 +661,7 @@ public class STLauncher extends javax.swing.JFrame {
     private String sessionID = "";
     private String username = "";
     private ArrayList<Product> rawProductList = new ArrayList<>();
+    private DownloadWorker currentDownload;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton createAcctButton;
