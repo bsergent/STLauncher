@@ -43,7 +43,7 @@ public class Product {
         
         if (showInLauncher) {
             downloadedVersion = "";
-            File versionFile = new File(STLauncher.getWorkingDirectory()+"/"+name+"/bin/version.yml");
+            File versionFile = new File(STLauncher.getWorkingDirectory()+"/"+name+"/bin/version.cfg");
             if (versionFile.exists()) {
                 String line = null;
                 try {
@@ -85,7 +85,10 @@ public class Product {
     
     public boolean isOutdated() {
         if (!"".equals(version) && "".equals(downloadedVersion)) {
-            STLauncher.debugMessage("Outdated by no download");
+            //STLauncher.debugMessage("Outdated by no download");
+            return true;
+        }
+        if (version == null) {
             return true;
         }
         return compareVersions(downloadedVersion, version);
@@ -93,7 +96,10 @@ public class Product {
     
     public boolean isLibOutdated() {
         if (!"".equals(libChangeVersion) && "".equals(downloadedVersion)) {
-            STLauncher.debugMessage("Outdated by no download");
+            //STLauncher.debugMessage("Outdated by no download");
+            return true;
+        }
+        if (libChangeVersion == null) {
             return true;
         }
         return compareVersions(downloadedVersion, libChangeVersion);
@@ -110,7 +116,7 @@ public class Product {
         
         if (dT == 'R' && (cT == 'B' || cT == 'A') || // Database is release, current is beta or alpha
                 dT == 'B' && cT == 'A') { // Database is beta, current is alpha
-            STLauncher.debugMessage("Outdated by version type");
+            //STLauncher.debugMessage("Outdated by version type");
             return true;
         }
         
@@ -118,13 +124,13 @@ public class Product {
         
         for (int i = 0; i < shorterLength; i++) {
             if (Integer.parseInt(cNA[i]) < Integer.parseInt(dNA[i])) {
-                STLauncher.debugMessage("Outdated by "+i+"number");
+                //STLauncher.debugMessage("Outdated by "+i+"number");
                 return true;
             }
         }
         
         if (cNA.length < dNA.length) {
-            STLauncher.debugMessage("Outdated by shorter length");
+            //STLauncher.debugMessage("Outdated by shorter length");
             return true;
         }
         

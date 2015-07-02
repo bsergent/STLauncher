@@ -139,6 +139,7 @@ public class STLauncher extends javax.swing.JFrame {
         rememLoginCheck.setText("Remember me");
 
         offlineButton.setText("Offline");
+        offlineButton.setEnabled(false);
         offlineButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 offlineButtonActionPerformed(evt);
@@ -349,7 +350,8 @@ public class STLauncher extends javax.swing.JFrame {
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
         try {
             Product prod = (Product) productList.getSelectedValue();
-            Process proc = Runtime.getRuntime().exec(new String[]{"java","-jar",STLauncher.getWorkingDirectory()+"/"+prod.name+"/bin/"+prod.name+".jar"});
+            Process proc = Runtime.getRuntime().exec(new String[]{"java","-jar",STLauncher.getWorkingDirectory()+"/"+prod.name+"/bin/"+prod+".jar",sessionID});
+            // TODO Check for natives before launching
             System.exit(0);
             
 //            proc.waitFor();
@@ -397,6 +399,8 @@ public class STLauncher extends javax.swing.JFrame {
         loginLogoutButton.setText("Login");
         
         switchVisiblePanel(mainPanel);
+        
+        // TODO Show downloaded projects when offline
     }//GEN-LAST:event_offlineButtonActionPerformed
 
     private void productListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_productListValueChanged
@@ -454,7 +458,7 @@ public class STLauncher extends javax.swing.JFrame {
                 currentDownload = null;
                 playButton.setEnabled(true);
             }
-            debugMessage("Property "+evt.getPropertyName()+" changed to "+evt.getNewValue());
+            //debugMessage("Property "+evt.getPropertyName()+" changed to "+evt.getNewValue());
             
             mainProgress.setString(taskName+" - "+progress+"%");
             mainProgress.setValue(progress);
@@ -634,7 +638,7 @@ public class STLauncher extends javax.swing.JFrame {
         descriptionPane.setText(newProd.desc);
         websiteButton.setEnabled(!"".equals(newProd.website));
         updateButton.setEnabled(newProd.isOutdated());
-        playButton.setEnabled(!newProd.isOutdated());
+        playButton.setEnabled(!newProd.isOutdated() || !newProd.forceLatest);
         
         if (currentDownload != null) {
             updateButton.setEnabled(false);
@@ -655,7 +659,7 @@ public class STLauncher extends javax.swing.JFrame {
     
     private static java.util.prefs.Preferences prefs;
     private static final boolean DEBUG = true;
-    private static final String VERSION = "0.0.3A";
+    private static final String VERSION = "0.0.5A";
     private static boolean canOpenWebpages = true;
     private static Desktop desktop;
     private String sessionID = "";

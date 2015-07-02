@@ -2,12 +2,16 @@
 package com.challengercity.launcher;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 import java.util.zip.ZipEntry;
@@ -59,6 +63,7 @@ public class DownloadWorker extends SwingWorker<Integer, Integer> {
         if (product.isLibOutdated()) {
             entireLength = entireLength + libLength;
         }
+        STLauncher.debugMessage("Downloading "+entireLength+" bytes");
         
 
         // Download routine
@@ -81,6 +86,7 @@ public class DownloadWorker extends SwingWorker<Integer, Integer> {
                 setProgress((int) (((float)totalBytesRead) / ((float)entireLength) * 100));
             }
         }
+        // TODO Make sure this actually overwrites files
         
          
         mainWriter.close();
@@ -88,13 +94,16 @@ public class DownloadWorker extends SwingWorker<Integer, Integer> {
         libWriter.close();
         libReader.close();
         
-        // TODO Unzip downloads and place in correct spots
         firePropertyChange("task", "", "Unpacking files");
         unzipFile(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/"+product.name+".zip", STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/");
         unzipFile(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/"+product.name+"-lib.zip", STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/");
+        Files.move(new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/resources").toPath(), new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/resources").toPath(), REPLACE_EXISTING);
         
         firePropertyChange("task", "", "Updating version file");
-        // TODO Set version in file
+        File versionFile = new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/version.cfg");
+        BufferedWriter versionWriter = new BufferedWriter(new FileWriter(versionFile));
+        versionWriter.write("version="+product.version);
+        versionWriter.close();
 
         setProgress(100);
         firePropertyChange("task", "", "Finished downloading "+product);
