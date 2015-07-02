@@ -2,8 +2,10 @@
 package com.challengercity.launcher;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 /**
@@ -24,7 +26,6 @@ public class Product {
     public String website;
     public String libChangeVersion;
     public String libFile;
-    
     public String downloadedVersion;
 
     public Product(int id, String name, String version, String desc, boolean forceLatest, boolean showInLauncher, float price, String file, String news, String website, String libChangeVersion, String libFile) {
@@ -135,6 +136,19 @@ public class Product {
         }
         
         return false;
+    }
+    
+    public void updateVersionFile() throws IOException {
+        File versionFile = new File(STLauncher.getWorkingDirectory()+"/"+name+"/bin/version.cfg");
+        BufferedWriter versionWriter = new BufferedWriter(new FileWriter(versionFile));
+        versionWriter.write("version="+version);
+        versionWriter.close();
+        downloadedVersion = version;
+    }
+    
+    public boolean hasNatives() {
+        File nativesFolder = new File(STLauncher.getWorkingDirectory()+"/"+name+"/bin/natives");
+        return nativesFolder.listFiles().length > 0;
     }
 
     @Override

@@ -10,7 +10,6 @@ import java.awt.Desktop;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,8 +18,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -350,22 +347,40 @@ public class STLauncher extends javax.swing.JFrame {
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
         try {
             Product prod = (Product) productList.getSelectedValue();
-            Process proc = Runtime.getRuntime().exec(new String[]{"java","-jar",STLauncher.getWorkingDirectory()+"/"+prod.name+"/bin/"+prod+".jar",sessionID});
-            // TODO Check for natives before launching
-            System.exit(0);
+            String nativesPath = getWorkingDirectory()+"/"+prod.name+"/bin/natives/";
+            if (prod.hasNatives()) {
+                String OS = (System.getProperty("os.name")).toUpperCase();
+                if (OS.contains("WIN")) {
+                    nativesPath += "windows";
+                } else if (OS.contains("MAC")) {
+                    nativesPath += "macosx";
+                } else {
+                    nativesPath += "linux";
+                }
+                nativesPath += "/";
+                debugMessage("Path: "+nativesPath);
+            }
             
-//            proc.waitFor();
-//            
-//            InputStream in = proc.getInputStream();
-//            InputStream err = proc.getErrorStream();
-//
-//            byte b[]=new byte[in.available()];
-//            in.read(b,0,b.length);
-//            System.out.println(new String(b));
-//
-//            byte c[]=new byte[err.available()];
-//            err.read(c,0,c.length);
-//            System.out.println(new String(c));
+            Process proc = Runtime.getRuntime().exec(new String[]{"java",
+                "-jar",
+                "-Djava.library.path="+nativesPath,
+                STLauncher.getWorkingDirectory()+"/"+prod.name+"/bin/"+prod+".jar",
+                sessionID});
+            // TODO Allow RAM selection -Xmx2048m
+//            System.exit(0);
+            
+            proc.waitFor();
+            
+            InputStream in = proc.getInputStream();
+            InputStream err = proc.getErrorStream();
+
+            byte b[]=new byte[in.available()];
+            in.read(b,0,b.length);
+            System.out.println(new String(b));
+
+            byte c[]=new byte[err.available()];
+            err.read(c,0,c.length);
+            System.out.println(new String(c));
             
         } catch (Exception ex) {
             Logger.getLogger(STLauncher.class.getName()).log(Level.SEVERE, null, ex);
@@ -638,7 +653,13 @@ public class STLauncher extends javax.swing.JFrame {
         descriptionPane.setText(newProd.desc);
         websiteButton.setEnabled(!"".equals(newProd.website));
         updateButton.setEnabled(newProd.isOutdated());
-        playButton.setEnabled(!newProd.isOutdated() || !newProd.forceLatest);
+        playButton.setEnabled(!newProd.isOutdated() || (!newProd.forceLatest && !"".equals(newProd.downloadedVersion)));
+        
+        if ("".equals(newProd.downloadedVersion)) {
+            updateButton.setText("Download");
+        } else {
+            updateButton.setText("Update");
+        }
         
         if (currentDownload != null) {
             updateButton.setEnabled(false);
@@ -659,7 +680,7 @@ public class STLauncher extends javax.swing.JFrame {
     
     private static java.util.prefs.Preferences prefs;
     private static final boolean DEBUG = true;
-    private static final String VERSION = "0.0.5A";
+    private static final String VERSION = "0.0.6A";
     private static boolean canOpenWebpages = true;
     private static Desktop desktop;
     private String sessionID = "";

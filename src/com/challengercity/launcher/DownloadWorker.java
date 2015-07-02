@@ -2,11 +2,9 @@
 package com.challengercity.launcher;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -97,13 +95,13 @@ public class DownloadWorker extends SwingWorker<Integer, Integer> {
         firePropertyChange("task", "", "Unpacking files");
         unzipFile(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/"+product.name+".zip", STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/");
         unzipFile(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/"+product.name+"-lib.zip", STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/");
-        Files.move(new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/resources").toPath(), new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/resources").toPath(), REPLACE_EXISTING);
+        File resFile = new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/resources");
+        if (resFile.exists()) {
+            Files.move(resFile.toPath(), new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/resources").toPath(), REPLACE_EXISTING);
+        }
         
         firePropertyChange("task", "", "Updating version file");
-        File versionFile = new File(STLauncher.getWorkingDirectory()+"/"+product.name+"/bin/version.cfg");
-        BufferedWriter versionWriter = new BufferedWriter(new FileWriter(versionFile));
-        versionWriter.write("version="+product.version);
-        versionWriter.close();
+        product.updateVersionFile();
 
         setProgress(100);
         firePropertyChange("task", "", "Finished downloading "+product);
