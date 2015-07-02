@@ -680,7 +680,7 @@ public class STLauncher extends javax.swing.JFrame {
     
     private static java.util.prefs.Preferences prefs;
     private static final boolean DEBUG = true;
-    private static final String VERSION = "0.0.6A";
+    private static final String VERSION = "0.1.0A";
     private static boolean canOpenWebpages = true;
     private static Desktop desktop;
     private String sessionID = "";

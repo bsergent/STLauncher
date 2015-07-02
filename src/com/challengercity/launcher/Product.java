@@ -106,31 +106,33 @@ public class Product {
         return compareVersions(downloadedVersion, libChangeVersion);
     }
     
-    private boolean compareVersions(String current, String published) { // Returns true if current is outdated
+    private boolean compareVersions(String downloaded, String published) { // Returns true if current is outdated
         
-        char cT = current.charAt(current.length()-1);
-        char dT = published.charAt(published.length()-1);
-        String cN = current.substring(0,current.length()-1);
-        String dN = published.substring(0,published.length()-1);
-        String[] cNA = cN.split("\\.");
-        String[] dNA = dN.split("\\.");
+        char downloadedLetter = downloaded.charAt(downloaded.length()-1);
+        char publishedLetter = published.charAt(published.length()-1);
+        String downloadedNumbers = downloaded.substring(0,downloaded.length()-1);
+        String publishedNumbers = published.substring(0,published.length()-1);
+        String[] downloadedNumbersArray = downloadedNumbers.split("\\.");
+        String[] publishedNumbersArray = publishedNumbers.split("\\.");
         
-        if (dT == 'R' && (cT == 'B' || cT == 'A') || // Database is release, current is beta or alpha
-                dT == 'B' && cT == 'A') { // Database is beta, current is alpha
+        if (publishedLetter == 'R' && (downloadedLetter == 'B' || downloadedLetter == 'A') || // Database is release, current is beta or alpha
+                    publishedLetter == 'B' && downloadedLetter == 'A') { // Database is beta, current is alpha
             //STLauncher.debugMessage("Outdated by version type");
             return true;
         }
         
-        int shorterLength = cNA.length>dNA.length?dNA.length:cNA.length;
+        int shorterLength = downloadedNumbersArray.length>publishedNumbersArray.length?publishedNumbersArray.length:downloadedNumbersArray.length;
         
         for (int i = 0; i < shorterLength; i++) {
-            if (Integer.parseInt(cNA[i]) < Integer.parseInt(dNA[i])) {
-                //STLauncher.debugMessage("Outdated by "+i+"number");
+            if (Integer.parseInt(downloadedNumbersArray[i]) < Integer.parseInt(publishedNumbersArray[i])) {
+                //STLauncher.debugMessage("Outdated by "+i+" number");
                 return true;
+            } else if (Integer.parseInt(downloadedNumbersArray[i]) > Integer.parseInt(publishedNumbersArray[i])) {
+                return false;
             }
         }
         
-        if (cNA.length < dNA.length) {
+        if (downloadedNumbersArray.length < publishedNumbersArray.length) {
             //STLauncher.debugMessage("Outdated by shorter length");
             return true;
         }
