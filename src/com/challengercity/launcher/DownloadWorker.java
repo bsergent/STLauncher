@@ -2,12 +2,15 @@
 package com.challengercity.launcher;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import javax.swing.JProgressBar;
@@ -23,10 +26,12 @@ public class DownloadWorker extends SwingWorker<Integer, Integer> {
     
     private Product product;
     private JProgressBar bar;
+    private int userId;
 
-    public DownloadWorker(Product product, JProgressBar bar) {
+    public DownloadWorker(Product product, JProgressBar bar, int userId) {
         this.product = product;
         this.bar = bar;
+        this.userId = userId;
     }
 
     @Override
@@ -85,6 +90,11 @@ public class DownloadWorker extends SwingWorker<Integer, Integer> {
             }
         }
         // TODO Make sure this actually overwrites files
+        // TODO Load the track downloads page at http://challengercity.com/v4/trackDownload.php?product=datura
+        // TODO Check if only updating
+        URLConnection productsConnection = new URL("http://challengercity.com/v4/trackDownload.php?product="+product.name+"&userId="+userId).openConnection();
+        BufferedReader productsIn = new BufferedReader(new InputStreamReader(productsConnection.getInputStream()));
+        productsIn.close();
         
          
         mainWriter.close();

@@ -245,7 +245,7 @@ public class STLauncher extends javax.swing.JFrame {
 
         jLabel5.setText("Description");
 
-        jLabel6.setText("News");
+        jLabel6.setText("Changelog");
 
         descriptionPane.setEditable(false);
         jScrollPane4.setViewportView(descriptionPane);
@@ -280,7 +280,7 @@ public class STLauncher extends javax.swing.JFrame {
                         .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(productPanelLayout.createSequentialGroup()
                                 .addComponent(jLabel6)
-                                .addContainerGap(213, Short.MAX_VALUE))
+                                .addContainerGap(180, Short.MAX_VALUE))
                             .addComponent(jScrollPane5)))))
         );
         productPanelLayout.setVerticalGroup(
@@ -396,6 +396,7 @@ public class STLauncher extends javax.swing.JFrame {
         switchVisiblePanel(loginPanel);
         sessionID = "";
         username = "";
+        userId = 0;
     }//GEN-LAST:event_loginLogoutButtonActionPerformed
 
     private void usernameFieldKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_usernameFieldKeyPressed
@@ -452,7 +453,7 @@ public class STLauncher extends javax.swing.JFrame {
 
         updateButton.setEnabled(false);
         
-        currentDownload = new DownloadWorker((Product) productList.getSelectedValue(), mainProgress);
+        currentDownload = new DownloadWorker((Product) productList.getSelectedValue(), mainProgress, userId);
         currentDownload.addPropertyChangeListener(new DownloadProgressListener());
         currentDownload.execute();
         
@@ -564,6 +565,7 @@ public class STLauncher extends javax.swing.JFrame {
             
             if (splitPostResult[0].equals("1")) {
                 sessionID = splitPostResult[1];
+                userId = Integer.parseInt(splitPostResult[2]);
                 username = splitPostResult[3];
                 loginLogoutButton.setText("Logout");
                 
@@ -680,11 +682,12 @@ public class STLauncher extends javax.swing.JFrame {
     
     private static java.util.prefs.Preferences prefs;
     private static final boolean DEBUG = true;
-    private static final String VERSION = "0.1.0A";
+    private static final String VERSION = "0.1.1A";
     private static boolean canOpenWebpages = true;
     private static Desktop desktop;
     private String sessionID = "";
     private String username = "";
+    private int userId;
     private ArrayList<Product> rawProductList = new ArrayList<>();
     private DownloadWorker currentDownload;
 

@@ -22,7 +22,7 @@ public class Product {
     public boolean showInLauncher;
     public float price;
     public String file;
-    public String news;
+    public String changelog;
     public String website;
     public String libChangeVersion;
     public String libFile;
@@ -37,7 +37,7 @@ public class Product {
         this.showInLauncher = showInLauncher;
         this.price = price;
         this.file = file;
-        this.news = news;
+        this.changelog = news;
         this.website = website;
         this.libChangeVersion = libChangeVersion;
         this.libFile = libFile;

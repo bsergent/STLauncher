@@ -321,7 +321,7 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" attributes="0">
                                       <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
-                                      <EmptySpace pref="213" max="32767" attributes="0"/>
+                                      <EmptySpace pref="180" max="32767" attributes="0"/>
                                   </Group>
                                   <Component id="jScrollPane5" max="32767" attributes="0"/>
                               </Group>
@@ -369,7 +369,7 @@
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel6">
               <Properties>
-                <Property name="text" type="java.lang.String" value="News"/>
+                <Property name="text" type="java.lang.String" value="Changelog"/>
               </Properties>
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPane4">
