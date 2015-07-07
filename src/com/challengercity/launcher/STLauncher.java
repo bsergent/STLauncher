@@ -82,11 +82,11 @@ public class STLauncher extends javax.swing.JFrame {
         productPanel = new javax.swing.JPanel();
         productTitle = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
+        changelogLabel = new javax.swing.JLabel();
         jScrollPane4 = new javax.swing.JScrollPane();
         descriptionPane = new javax.swing.JTextPane();
-        jScrollPane5 = new javax.swing.JScrollPane();
-        newsEditorPane = new javax.swing.JEditorPane();
+        changelogScrollPane = new javax.swing.JScrollPane();
+        changelogPane = new javax.swing.JEditorPane();
         websiteButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -210,7 +210,6 @@ public class STLauncher extends javax.swing.JFrame {
         });
 
         playButton.setText("Play");
-        playButton.setToolTipText("");
         playButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 playButtonActionPerformed(evt);
@@ -245,13 +244,15 @@ public class STLauncher extends javax.swing.JFrame {
 
         jLabel5.setText("Description");
 
-        jLabel6.setText("Changelog");
+        changelogLabel.setText("Changelog");
 
         descriptionPane.setEditable(false);
         jScrollPane4.setViewportView(descriptionPane);
 
-        newsEditorPane.setEditable(false);
-        jScrollPane5.setViewportView(newsEditorPane);
+        changelogPane.setEditable(false);
+        changelogPane.setBackground(new java.awt.Color(255, 255, 255));
+        changelogPane.setForeground(new java.awt.Color(0, 0, 0));
+        changelogScrollPane.setViewportView(changelogPane);
 
         websiteButton.setText("Website");
         websiteButton.addActionListener(new java.awt.event.ActionListener() {
@@ -279,9 +280,9 @@ public class STLauncher extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(productPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel6)
+                                .addComponent(changelogLabel)
                                 .addContainerGap(180, Short.MAX_VALUE))
-                            .addComponent(jScrollPane5)))))
+                            .addComponent(changelogScrollPane)))))
         );
         productPanelLayout.setVerticalGroup(
             productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -293,10 +294,10 @@ public class STLauncher extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
-                    .addComponent(jLabel6))
+                    .addComponent(changelogLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(productPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane5)
+                    .addComponent(changelogScrollPane)
                     .addComponent(jScrollPane4))
                 .addContainerGap())
         );
@@ -420,7 +421,9 @@ public class STLauncher extends javax.swing.JFrame {
     }//GEN-LAST:event_offlineButtonActionPerformed
 
     private void productListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_productListValueChanged
-        showProduct((Product) productList.getSelectedValue());
+        if (productList.getSelectedValue() != null) {
+            showProduct((Product) productList.getSelectedValue());
+        }
     }//GEN-LAST:event_productListValueChanged
 
     private void createAcctButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_createAcctButtonActionPerformed
@@ -647,6 +650,7 @@ public class STLauncher extends javax.swing.JFrame {
         
         if (prodToSel != null) {
             productList.setSelectedValue(prodToSel, true);
+            productList.setSelectedIndex(0);
         }
     }
     
@@ -656,6 +660,20 @@ public class STLauncher extends javax.swing.JFrame {
         websiteButton.setEnabled(!"".equals(newProd.website));
         updateButton.setEnabled(newProd.isOutdated());
         playButton.setEnabled(!newProd.isOutdated() || (!newProd.forceLatest && !"".equals(newProd.downloadedVersion)));
+        
+        if (!"".equals(newProd.changelog)) {
+            try {
+                changelogPane.setPage(newProd.changelog);
+                changelogScrollPane.setVisible(true);
+                changelogLabel.setVisible(true);
+            } catch (IOException ex) {
+                changelogScrollPane.setVisible(false);
+                changelogLabel.setVisible(false);
+            }
+        } else {
+            changelogScrollPane.setVisible(false);
+            changelogLabel.setVisible(false);
+        }
         
         if ("".equals(newProd.downloadedVersion)) {
             updateButton.setText("Download");
@@ -682,7 +700,7 @@ public class STLauncher extends javax.swing.JFrame {
     
     private static java.util.prefs.Preferences prefs;
     private static final boolean DEBUG = true;
-    private static final String VERSION = "0.1.1A";
+    private static final String VERSION = "0.1.2A";
     private static boolean canOpenWebpages = true;
     private static Desktop desktop;
     private String sessionID = "";
@@ -692,23 +710,23 @@ public class STLauncher extends javax.swing.JFrame {
     private DownloadWorker currentDownload;
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel changelogLabel;
+    private javax.swing.JEditorPane changelogPane;
+    private javax.swing.JScrollPane changelogScrollPane;
     private javax.swing.JButton createAcctButton;
     private javax.swing.JTextPane descriptionPane;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JButton loginButton;
     private javax.swing.JLabel loginFeedbackLabel;
     private javax.swing.JButton loginLogoutButton;
     private javax.swing.JPanel loginPanel;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JProgressBar mainProgress;
-    private javax.swing.JEditorPane newsEditorPane;
     private javax.swing.JButton offlineButton;
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JButton playButton;
