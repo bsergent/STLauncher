@@ -10,6 +10,10 @@ import java.awt.Desktop;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -368,7 +372,7 @@ public class STLauncher extends javax.swing.JFrame {
                 STLauncher.getWorkingDirectory()+"/"+prod.name+"/bin/"+prod+".jar",
                 sessionID});
             // TODO Allow RAM selection -Xmx2048m
-//            System.exit(0);
+            //System.exit(0);
             
             proc.waitFor();
             
@@ -383,7 +387,7 @@ public class STLauncher extends javax.swing.JFrame {
             err.read(c,0,c.length);
             System.out.println(new String(c));
             
-        } catch (Exception ex) {
+        } catch (IOException | InterruptedException ex) {
             Logger.getLogger(STLauncher.class.getName()).log(Level.SEVERE, null, ex);
         }
         
@@ -417,7 +421,7 @@ public class STLauncher extends javax.swing.JFrame {
         
         switchVisiblePanel(mainPanel);
         
-        // TODO Show downloaded projects when offline
+        updateProducts(false);
     }//GEN-LAST:event_offlineButtonActionPerformed
 
     private void productListValueChanged(javax.swing.event.ListSelectionEvent evt) {//GEN-FIRST:event_productListValueChanged
@@ -432,10 +436,10 @@ public class STLauncher extends javax.swing.JFrame {
                 desktop.browse(new URI("http://challengercity.com/v4/account/frontend/createAccount.php"));
                 loginFeedbackLabel.setText("Login here after creating an account");
             } catch (URISyntaxException | IOException e) {
-                loginFeedbackLabel.setText("Please visit http://challengercity.com/");
+                loginFeedbackLabel.setText("Please visit http://sergenttech.com/");
             }
         } else {
-            loginFeedbackLabel.setText("Please visit http://challengercity.com/");
+            loginFeedbackLabel.setText("Please visit http://sergenttech.com/");
         }
     }//GEN-LAST:event_createAcctButtonActionPerformed
 
@@ -477,7 +481,6 @@ public class STLauncher extends javax.swing.JFrame {
                 currentDownload = null;
                 playButton.setEnabled(true);
             }
-            //debugMessage("Property "+evt.getPropertyName()+" changed to "+evt.getNewValue());
             
             mainProgress.setString(taskName+" - "+progress+"%");
             mainProgress.setValue(progress);
@@ -527,10 +530,14 @@ public class STLauncher extends javax.swing.JFrame {
         }
     }
     
-    public void switchVisiblePanel(JPanel panel) {
+    private void switchVisiblePanel(JPanel panel) {
         loginPanel.setVisible(false);
         mainPanel.setVisible(false);
         panel.setVisible(true);
+        
+        if (productsCache.exists()) {
+            offlineButton.setEnabled(true);
+        }
     }
     
     public void attemptLogin() {
@@ -572,68 +579,99 @@ public class STLauncher extends javax.swing.JFrame {
                 username = splitPostResult[3];
                 loginLogoutButton.setText("Logout");
                 
-                updateProducts();
+                updateProducts(true);
                 
                 switchVisiblePanel(mainPanel);
             } else {
                 loginFeedbackLabel.setText("Incorrect username/password combination");
             }
-        } catch (Exception ex) {
-            loginFeedbackLabel.setText("Could not connect to login servers");
+        } catch (IOException | NumberFormatException ex) {
+            loginFeedbackLabel.setText("Could not connect to login servers - "+ex.getLocalizedMessage());
         }
         
         passwordField.setText("");
     }
     
-    public void updateProducts() {
-        try {
-            URLConnection productsConnection = new URL("http://challengercity.com/v4/getProducts.php").openConnection();
-            BufferedReader productsIn = new BufferedReader(new InputStreamReader(productsConnection.getInputStream()));
-            String productsInputLine;
-            String productsResult = "";
-            while ((productsInputLine = productsIn.readLine()) != null)
-                productsResult = productsResult+productsInputLine;
-            productsIn.close();
-            
-            rawProductList.clear();
-            String[] sa = productsResult.split(Character.toString((char) 29));
-            if ("1".equals(sa[0])) {
-                for (int i = 1; i < sa.length; i++) {
-                    String[] saa = sa[i].split(Character.toString((char) 31));
-                    Product prod = new Product(
-                            Integer.parseInt(saa[0]),
-                            saa[1],
-                            saa[2],
-                            saa[3], 
-                            "1".equals(saa[4]),
-                            "1".equals(saa[5]),
-                            Float.parseFloat(saa[6]),
-                            saa.length>7?saa[7]:null,
-                            saa.length>8?saa[8]:null,
-                            saa.length>9?saa[9]:null,
-                            saa.length>10?saa[10]:null,
-                            saa.length>11?saa[11]:null);
-                    rawProductList.add(prod);
-                    debugMessage(prod.toString()+" v"+prod.version);
+    public void updateProducts(boolean online) {
+        
+        String encodedProducts = "";
+        
+        if (online) {
+            try {
+                URLConnection productsConnection = new URL("http://challengercity.com/v4/getProducts.php").openConnection();
+                String productsResult;
+                try (BufferedReader productsIn = new BufferedReader(new InputStreamReader(productsConnection.getInputStream()))) {
+                    String productsInputLine;
+                    productsResult = "";
+                    while ((productsInputLine = productsIn.readLine()) != null)
+                        productsResult = productsResult+productsInputLine;
                 }
-                
-                for (Product prod : rawProductList) {
-                    if ("stLauncher".equals(prod.name)) {
-                        prod.downloadedVersion = VERSION;
-                        if (prod.isOutdated()) {
-                            this.setTitle("Sergent-Tech Launcher - v"+VERSION+" - Outdated");
-                            STLauncher.debugMessage("Update for launcher avaliable");
-                        } else {
-                            STLauncher.debugMessage("Launcher up to date");
-                        }
-                        break;
-                    }
-                }
-            } else {
+                encodedProducts = productsResult;
+            } catch (IOException | NumberFormatException ex) {
                 System.out.println("Failed to fetch product list from server");
             }
-        } catch (IOException | NumberFormatException ex) {
+        } else {
+            try {
+                try (BufferedReader productsIn = new BufferedReader(new FileReader(productsCache))) {
+                    encodedProducts = productsIn.readLine();
+                }
+            } catch (IOException ex) {
+                System.out.println("Failed to load product list from local cache");
+            }
+        }
+        
+        rawProductList.clear();
+        String[] sa = encodedProducts.split(Character.toString((char) 29)); // TODO Save the result to the cache
+        if ("1".equals(sa[0])) {
+            for (int i = 1; i < sa.length; i++) {
+                String[] saa = sa[i].split(Character.toString((char) 31));
+                try {
+                    Product prod = new Product(
+                        Integer.parseInt(saa[0]),
+                        saa[1],
+                        saa[2],
+                        saa[3], 
+                        "1".equals(saa[4]),
+                        "1".equals(saa[5]),
+                        Float.parseFloat(saa[6]),
+                        saa.length>7?saa[7]:null,
+                        saa.length>8?saa[8]:null,
+                        saa.length>9?saa[9]:null,
+                        saa.length>10?saa[10]:null,
+                        saa.length>11?saa[11]:null);
+                    rawProductList.add(prod);
+                    debugMessage(prod.toString()+" v"+prod.version);
+                } catch (NumberFormatException ex) {
+                    System.out.println("Invalid paramaters found in encoded products list");
+                }
+            }
+
+        } else {
             System.out.println("Failed to fetch product list from server");
+        }
+        
+        if (online) {
+            try {
+                new File(getWorkingDirectory()+"/stLauncher").mkdir();
+                BufferedWriter productsOut = new BufferedWriter(new FileWriter(productsCache));
+                productsOut.write(encodedProducts);
+                productsOut.close();
+            } catch (IOException ex) {
+                System.out.println("Failed to load product list from local cache");
+            }
+        }
+        
+        for (Product prod : rawProductList) {
+            if ("stLauncher".equals(prod.name)) {
+                prod.downloadedVersion = VERSION;
+                if (prod.isOutdated()) {
+                    this.setTitle("Sergent-Tech Launcher - v"+VERSION+" - Outdated");
+                    STLauncher.debugMessage("Update for launcher avaliable");
+                } else {
+                    STLauncher.debugMessage("Launcher up to date");
+                }
+                break;
+            }
         }
         
         Product prodToSel = null;
@@ -659,9 +697,9 @@ public class STLauncher extends javax.swing.JFrame {
         descriptionPane.setText(newProd.desc);
         websiteButton.setEnabled(!"".equals(newProd.website));
         updateButton.setEnabled(newProd.isOutdated());
-        playButton.setEnabled(!newProd.isOutdated() || (!newProd.forceLatest && !"".equals(newProd.downloadedVersion)));
+        playButton.setEnabled(!newProd.isOutdated() || ((!newProd.forceLatest || isOffline()) && !"".equals(newProd.downloadedVersion)));
         
-        if (!"".equals(newProd.changelog)) {
+        if (!"".equals(newProd.changelog) && !isOffline()) {
             try {
                 changelogPane.setPage(newProd.changelog);
                 changelogScrollPane.setVisible(true);
@@ -681,9 +719,13 @@ public class STLauncher extends javax.swing.JFrame {
             updateButton.setText("Update");
         }
         
-        if (currentDownload != null) {
+        if (currentDownload != null || isOffline()) {
             updateButton.setEnabled(false);
         }
+    }
+    
+    public boolean isOffline() {
+        return "".equals(sessionID);
     }
     
     public static String getWorkingDirectory() {
@@ -700,9 +742,10 @@ public class STLauncher extends javax.swing.JFrame {
     
     private static java.util.prefs.Preferences prefs;
     private static final boolean DEBUG = true;
-    private static final String VERSION = "0.1.2A";
+    private static final String VERSION = "1.0.0B";
     private static boolean canOpenWebpages = true;
     private static Desktop desktop;
+    private static final File productsCache = new File(getWorkingDirectory()+"/stLauncher/products.cache");
     private String sessionID = "";
     private String username = "";
     private int userId;
